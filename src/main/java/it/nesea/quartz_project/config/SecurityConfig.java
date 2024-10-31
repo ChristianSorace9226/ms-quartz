@@ -15,6 +15,7 @@ public class SecurityConfig {
 
     private final JwtSecurityFilter jwtSecurityFilter;
 
+
     public SecurityConfig(JwtSecurityFilter jwtSecurityFilter) {
         this.jwtSecurityFilter = jwtSecurityFilter;
     }
@@ -23,7 +24,6 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
         http.addFilterBefore(jwtSecurityFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
