@@ -1,23 +1,31 @@
 package it.nesea.quartz_project.util;
 
 import it.nesea.quartz_project.controller.JwtExpiriedService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
-@AllArgsConstructor
 public class QuartzJob implements Job {
 
     private final JwtExpiriedService jwtExpiriedService;
 
+    @Autowired
+    public QuartzJob(JwtExpiriedService jwtExpiriedService) {
+        this.jwtExpiriedService = jwtExpiriedService;
+    }
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        jwtExpiriedService.deleteExpiredTokens();
+        if (jwtExpiriedService != null) {
+            jwtExpiriedService.deleteExpiredTokens();
+        } else {
+            System.out.println("JwtExpiriedService non funziona");
+        }
     }
 }
+
+
 

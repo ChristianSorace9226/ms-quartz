@@ -1,6 +1,5 @@
 package it.nesea.quartz_project.service;
 
-
 import it.nesea.quartz_project.common.AppValue;
 import it.nesea.quartz_project.service.resource.TokenValidationResource;
 import jakarta.annotation.Nonnull;

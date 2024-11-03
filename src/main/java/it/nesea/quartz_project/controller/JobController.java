@@ -1,10 +1,9 @@
 package it.nesea.quartz_project.controller;
 
-import it.nesea.quartz_project.util.QuartzJob;
+import it.nesea.quartz_project.config.QuartzConfig;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,81 +12,36 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class JobController {
 
-//    private final Scheduler scheduler;
-//
-//    @PostMapping("/start")
-//    public String startJob(@RequestHeader ("Authorization") String token) throws SchedulerException {
-//        try {
-//            if (scheduler.isShutdown()) {
-//                // Creare un nuovo scheduler
-//                SchedulerFactory schedulerFactory = new StdSchedulerFactory();
-//                Scheduler newScheduler = schedulerFactory.getScheduler();
-//                newScheduler.start();
-//                return "JOB ON!!";
-//            }
-//            // Logica per avviare il job
-//        } catch (SchedulerException e) {
-//            // Gestione delle eccezioni
-//            log.error("Error starting job: ", e);
-//            return "JOB OFF!!";
-//        }
-//        return "JOB gia avviato";
-//    }
-//
-//    @PostMapping("/stop")
-//    public String stopJob() throws SchedulerException {
-//        scheduler.shutdown();
-//        return "Job OFF!";
-//    }
-//
-//    @GetMapping("/status")
-//    public String getJobStatus() throws SchedulerException {
-//        if (scheduler.isShutdown()) {
-//            return "Scheduler OFF";
-//        } else if (scheduler.isInStandbyMode()) {
-//            return "Scheduler in Standby";
-//        } else {
-//            return "Scheduler ON";
-//        }
-//    }
-
     private final Scheduler scheduler;
+    private final QuartzConfig quartzConfig;
 
     @PostMapping("/start")
     public String startJob(@RequestHeader("Authorization") String token) throws SchedulerException {
         try {
-            JobKey jobKey = JobKey.jobKey("quartzJob", "group1");
+            JobKey jobKey = JobKey.jobKey("expiredTokenCleanupJob");
+
             if (scheduler.checkExists(jobKey)) {
-                return "JOB già avviato!";
+                scheduler.resumeJob(jobKey);
+                return "Job ripreso con successo.";
             }
 
-            JobDetail jobDetail = JobBuilder.newJob(QuartzJob.class)
-                    .withIdentity(jobKey)
-                    .build();
-
-            Trigger trigger = TriggerBuilder.newTrigger()
-                    .forJob(jobDetail)
-                    .withIdentity("quartzJob", "group1")
-                    .startNow()
-                    .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                            .withIntervalInSeconds(10)
-                            .repeatForever())
-                    .build();
+            JobDetail jobDetail = quartzConfig.expiredTokenCleanupJobDetail();
+            Trigger trigger = quartzConfig.expiredTokenCleanupJobTrigger();
 
             scheduler.scheduleJob(jobDetail, trigger);
+            scheduler.start();
+
             return "Job avviato con successo!";
         } catch (SchedulerException e) {
-            log.error("Error starting job: ", e);
-            return "Errore nell'avvio del job!";
+           return "Errore nell'avvio del job!";
         }
     }
 
     @PostMapping("/stop")
-    public String stopJob() throws SchedulerException {
-        JobKey jobKey = JobKey.jobKey("quartzJob", "group1");
-
+    public String stopJob(@RequestHeader("Authorization") String token) throws SchedulerException {
+        JobKey jobKey = JobKey.jobKey("expiredTokenCleanupJob");
         if (scheduler.checkExists(jobKey)) {
-            scheduler.deleteJob(jobKey);
+            scheduler.pauseJob(jobKey);
             return "Job fermato con successo!";
         } else {
             return "Job non trovato!";
@@ -95,18 +49,18 @@ public class JobController {
     }
 
     @GetMapping("/status")
-    public String getJobStatus() throws SchedulerException {
-        JobKey jobKey = JobKey.jobKey("quartzJob", "group1");
+    public String getJobStatus(@RequestHeader("Authorization") String token) throws SchedulerException {
+        JobKey jobKey = JobKey.jobKey("expiredTokenCleanupJob");
+        TriggerKey triggerKey = TriggerKey.triggerKey("expiredTokenCleanupTrigger");
 
-        if (scheduler.isShutdown()) {
-            return "Scheduler OFF";
-        } else if (scheduler.isInStandbyMode()) {
-            return "Scheduler in Standby";
-        } else if (scheduler.checkExists(jobKey)) {
-            return "Job è attivo!";
+        if (scheduler.checkExists(jobKey)) {
+            Trigger.TriggerState triggerState = scheduler.getTriggerState(triggerKey);
+            return "Job è " + triggerState.name();
         } else {
             return "Job non trovato!";
         }
     }
 }
+
+
 

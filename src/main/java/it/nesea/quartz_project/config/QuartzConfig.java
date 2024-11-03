@@ -1,27 +1,20 @@
 package it.nesea.quartz_project.config;
 
-
-import it.nesea.quartz_project.controller.JwtExpiriedService;
+import it.nesea.quartz_project.util.PersonalJobFactory;
 import it.nesea.quartz_project.util.QuartzJob;
-import lombok.AllArgsConstructor;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-
 @Configuration
-
 public class QuartzConfig {
 
-    private final Scheduler scheduler;
-//    private final JwtExpiriedService jwtExpiriedService;
+    private final PersonalJobFactory jobFactory;
 
-    public QuartzConfig(@Lazy Scheduler scheduler) {
-        this.scheduler = scheduler;
-//        this.jwtExpiriedService = jwtExpiriedService;, JwtExpiriedService jwtExpiriedService
+    public QuartzConfig(PersonalJobFactory jobFactory) {
+        this.jobFactory = jobFactory;
     }
 
     @Lazy
@@ -29,30 +22,31 @@ public class QuartzConfig {
     public Scheduler scheduler() throws Exception {
         SchedulerFactory schedulerFactory = new StdSchedulerFactory();
         Scheduler scheduler = schedulerFactory.getScheduler();
-        scheduler.start();
+        scheduler.setJobFactory(jobFactory);
         return scheduler;
     }
 
+    public JobDetail expiredTokenCleanupJobDetail() {
+        return JobBuilder.newJob(QuartzJob.class)
+                .withIdentity("expiredTokenCleanupJob")
+                .storeDurably()
+                .build();
+    }
 
-//    @Bean
-//    public JobDetail expiredTokenCleanupJobDetail() {
-//        return JobBuilder.newJob(QuartzJob.class)
-//                .withIdentity("expiredTokenCleanupJob")
-//                .storeDurably()
-//                .build();
-//    }
-//
-//    @Lazy
-//    @Bean
-//    public Trigger expiredTokenCleanupJobTrigger() {
-//        return TriggerBuilder.newTrigger()
-//                .forJob(expiredTokenCleanupJobDetail())
-//                .withIdentity("expiredTokenCleanupTrigger")
-//                .withSchedule(simpleSchedule()
-//                        .withIntervalInMinutes(1) // Ogni min
-//                        .repeatForever())
-//                .build();
-//    }
+    public Trigger expiredTokenCleanupJobTrigger() {
+        return TriggerBuilder.newTrigger()
+                .forJob(expiredTokenCleanupJobDetail())
+                .withIdentity("expiredTokenCleanupTrigger")
+                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
+                        .withIntervalInMinutes(1) // Ogni min
+                        .repeatForever())
+                .build();
+    }
 }
+
+
+
+
+
 
 
