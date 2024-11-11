@@ -22,20 +22,18 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
 
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain chain) throws ServletException, IOException {
-
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
         String authorizationHeader = request.getHeader("Authorization");
-
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            Boolean isValid = tokenValidationResource.isValidToken(authorizationHeader, request.getRequestURI());
-            if (Boolean.TRUE.equals(isValid)) {
-                chain.doFilter(request, response);
-            } else {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token non valido");
+            try {
+                Boolean isValid = tokenValidationResource.isValidToken(authorizationHeader, request.getRequestURI());
+                if (Boolean.TRUE.equals(isValid)) {
+                    chain.doFilter(request, response);
+                }
+            } catch (RuntimeException e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write(e.getMessage());
             }
-        } else {
-            chain.doFilter(request, response);
         }
     }
 }

@@ -40,8 +40,8 @@ public class TokenValidationService implements TokenValidationResource {
             );
 
             return responseValid.getBody();
-        } catch (RestClientException e) {
-            throw new RuntimeException("Errore di comunicazione: " + e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Errore di comunicazione: Non hai l'autorizzazione per accedere a questo servizio! " + e.getLocalizedMessage());
         }
     }
 }
