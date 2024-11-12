@@ -1,9 +1,11 @@
 package it.nesea.quartz_project.service;
 
 import it.nesea.quartz_project.common.AppValue;
+import it.nesea.quartz_project.response.CustomResponse;
 import it.nesea.quartz_project.service.resource.TokenValidationResource;
 import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,7 +23,7 @@ public class TokenValidationService implements TokenValidationResource {
     private final RestTemplate restTemplate;
 
     @Override
-    public Boolean isValidToken(@Nonnull String authorizationHeader, @Nonnull String requestURI) {
+    public CustomResponse<Boolean> isValidToken(@Nonnull String authorizationHeader, @Nonnull String requestURI) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", authorizationHeader);
@@ -32,16 +34,17 @@ public class TokenValidationService implements TokenValidationResource {
                     .queryParam("uri", requestURI)
                     .toUriString();
 
-            ResponseEntity<Boolean> responseValid = restTemplate.exchange(
+            ResponseEntity<CustomResponse<Boolean>> responseEntity = restTemplate.exchange(
                     validationUrl,
                     HttpMethod.GET,
                     entity,
-                    Boolean.class
+                    new ParameterizedTypeReference<>() { // N.b. " <> " stanno per <CustomResponse<Boolean>
+                    }
             );
 
-            return responseValid.getBody();
+            return responseEntity.getBody();
         } catch (RuntimeException e) {
-            throw new RuntimeException("Errore di comunicazione: Non hai l'autorizzazione per accedere a questo servizio! " + e.getLocalizedMessage());
+            throw new RuntimeException(e.getMessage());
         }
     }
 }
