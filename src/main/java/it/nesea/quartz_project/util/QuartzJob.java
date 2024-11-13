@@ -1,9 +1,7 @@
 package it.nesea.quartz_project.util;
 
 import it.nesea.quartz_project.controller.JwtExpiriedService;
-import org.quartz.Job;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +20,7 @@ public class QuartzJob implements Job {
         if (jwtExpiriedService != null) {
             jwtExpiriedService.deleteExpiredTokens();
         } else {
-            System.out.println("JwtExpiriedService non funziona");
+            throw new RuntimeException("JwtExpiriedService non funziona");
         }
     }
 }

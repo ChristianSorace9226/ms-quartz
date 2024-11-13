@@ -17,6 +17,17 @@ public class QuartzConfig {
         this.jobFactory = jobFactory;
     }
 
+    // Definisco i bean per JobKey e TriggerKey
+    @Bean
+    public JobKey jobKey() {
+        return JobKey.jobKey("expiredTokenCleanupJob");
+    }
+
+    @Bean
+    public TriggerKey triggerKey() {
+        return TriggerKey.triggerKey("expiredTokenCleanupTrigger");
+    }
+
     @Lazy
     @Bean
     public Scheduler scheduler() throws Exception {
